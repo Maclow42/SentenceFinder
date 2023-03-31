@@ -4,9 +4,9 @@ import random
 ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ,.;:/!?\n"
 ALPHA_LENGTH = len(ALPHA)
 #Genetic parameters
-GENERATION_SIZE = 3000
-ELITE_PERCENTAGE = 30
-MUTATION_PROB = 0.05
+GENERATION_SIZE = 2000
+ELITE_PERCENTAGE = 20
+MUTATION_PROB = 0.01
 #Sentence to find
 SENTENCE = "The world is a vast and fascinating place, full of wonder and mystery."
 
