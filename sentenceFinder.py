@@ -1,15 +1,14 @@
 import random
 
 ##### Define parameters #####
-ALPHA = [chr(i) for i in range(32, 123)]
+ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ,.;:/!?\n"
 ALPHA_LENGTH = len(ALPHA)
-#Sentence to find
-SENTENCE = "this is a test sentence"
 #Genetic parameters
-NB_PER_GENERATION = 1000
+GENERATION_SIZE = 3000
 ELITE_PERCENTAGE = 30
 MUTATION_PROB = 0.05
-
+#Sentence to find
+SENTENCE = "The world is a vast and fascinating place, full of wonder and mystery."
 
 class Individual:
 	"""
@@ -31,7 +30,6 @@ class Individual:
 		self.size = size
 		self.sentence = ""
 		
-		
 	def generate_sentence(self):
 		"""
 		Takes one parameters:
@@ -47,43 +45,39 @@ class Individual:
 		self.sentence = sentence
 		return
 		
-	def compute_score(self, reference):
+	def compute_fitness(self):
 		"""
-		Takes one parameter:
-			-> reference(string)
 		Return:
-			-> -1 if self.sentence and reference have two different sizes
-			-> else the number of corresponding characters between self.sentence and reference
+			-> the number of corresponding characters between self.sentence and SENTENCE
 		"""
-		if len(reference) != self.size:
-			return -1
 		score = 0
 		for i in range(self.size):
-			score += reference[i] == self.sentence[i]
+			score += SENTENCE[i] == self.sentence[i]
 		return score
 		
-def get_child(ind1, ind2, mutation_prob):
+def get_child(ind1, ind2):
 	"""
 	Takes 3 parameters:
 		-> ind1 (Individual)
 		-> ind2 (Individual)
-		-> mutation_prob(int, percentage)
-	return an Individual based on genetics of ind1 and ind2 with a mutation probability of mutation_prob
-	return None if an error occured
+	return an Individual based on genetics of ind1 and ind2 with a mutation probability of MUTATION_PROB
+	return None if MUTATION_PROB is not a percentage or if ind1 and ind2 have two different sizes
 	"""
 	#If mutation_prof is not a probability
-	if mutation_prob < 0 or mutation_prob > 1:
+	if MUTATION_PROB < 0 or MUTATION_PROB > 1:
+		printf("ERROR : MUTATION_PROB is not a probability (not included in [0, 1]")
 		return None
 	if ind1.size != ind2.size:
+		printf("ERROR : ind1 and ind2 have two different sizes")
 		return None
 		
 	random.seed()
 	child = Individual(ind1.size)
 	for i in range(child.size):
 		p = random.random()
-		if p < mutation_prob :
+		if p < MUTATION_PROB :
 			child.sentence += ALPHA[random.randint(0, ALPHA_LENGTH-1)]
-		elif p < (1-mutation_prob)/2:
+		elif p < (1-MUTATION_PROB)/2:
 			child.sentence += ind1.sentence[i]
 		else:
 			child.sentence += ind2.sentence[i]
@@ -93,7 +87,7 @@ def create_generation(size, sizeind, parents=None):
 	"""
 	Takes 3 arguments:
 		-> size(int) : number of Individual in generation
-		->sizeind(int) : size of Individuals
+		-> sizeind(int) : size of Individuals
 		-> parents(Individual array) : if not None, parents used to create generation
 	Return an Individual array of length size
 	"""
@@ -109,16 +103,53 @@ def create_generation(size, sizeind, parents=None):
 		for i in range(nbp, size):
 			p1 = parents[random.randint(0, nbp-1)]
 			p2 = parents[random.randint(0, nbp-1)]
-			generation.append(get_child(p1, p2, MUTATION_PROB))
+			generation.append(get_child(p1, p2))
 	else:
 		for i in range(size):
 			ind = Individual(sizeind)
 			ind.generate_sentence()
 			generation.append(ind)
 	return generation
+	
+def get_elite(generation):
+	"""
+	Takes one argument:
+		-> generation(Individual array)
+	Returns:
+		-> the ELITE_PERCENTAGE% best individuals in generation
+		-> None if ELITE_PERCENTAGE is not a percentage
+	"""
+	
+	if ELITE_PERCENTAGE < 0 or ELITE_PERCENTAGE > 100:
+		print("ERROR : ELITE_PERCENTAGE is not a percentage (not included in [0, 100]")
+		return None
+		
+	#sort generation in decreasing order according to element's fitness
+	generation = sorted(generation, key=lambda x : -x.compute_fitness())
+	nbToTake = ELITE_PERCENTAGE * len(generation) //100
+	elite = []
+	for i in range(nbToTake):
+		elite.append(generation[i])
+		
+	return elite
 		
 		
-		
-a = create_generation(3, 5)
-for e in a:
-	print(e.sentence)
+def main():
+	i = 0
+	L = len(SENTENCE)
+	generation = create_generation(GENERATION_SIZE, L)
+	elite = get_elite(generation)
+	print("Generation n°" + str(i))
+	print(elite[0].sentence, "-> score:", str(elite[0].compute_fitness()) + "/" + str(L), "\n")
+	
+	
+	while(elite[0].compute_fitness() != L):
+		i += 1
+		generation = create_generation(GENERATION_SIZE, L, elite)
+		elite = get_elite(generation)
+		print("Generation n°" + str(i))
+		#print the best of all generation
+		print(elite[0].sentence, "-> score:", str(elite[0].compute_fitness()) + "/" + str(L), "\n")
+
+if __name__ == "__main__":
+   main()
